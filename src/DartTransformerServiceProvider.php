@@ -18,8 +18,15 @@ class DartTransformerServiceProvider extends PackageServiceProvider
         $package
             ->name('dart-transformer')
             ->hasConfigFile()
-            ->hasViews()
-            ->hasMigration('create_dart_transformer_table')
             ->hasCommand(DartTransformerCommand::class);
+    }
+
+    public function register(): void
+    {
+        parent::register();
+
+        $this->app->singleton(DartTransformer::class, function ($app) {
+            return new DartTransformer($app['config']['dart-transformer'] ?? []);
+        });
     }
 }
