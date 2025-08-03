@@ -2,9 +2,9 @@
 
 namespace M2rius\DartTransformer;
 
+use M2rius\DartTransformer\Commands\DartTransformerCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use M2rius\DartTransformer\Commands\DartTransformerCommand;
 
 class DartTransformerServiceProvider extends PackageServiceProvider
 {
