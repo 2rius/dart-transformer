@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton;
+namespace M2rius\DartTransformer;
 
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use VendorName\Skeleton\Commands\SkeletonCommand;
+use M2rius\DartTransformer\Commands\DartTransformerCommand;
 
-class SkeletonServiceProvider extends PackageServiceProvider
+class DartTransformerServiceProvider extends PackageServiceProvider
 {
     public function configurePackage(Package $package): void
     {
@@ -16,10 +16,10 @@ class SkeletonServiceProvider extends PackageServiceProvider
          * More info: https://github.com/spatie/laravel-package-tools
          */
         $package
-            ->name('skeleton')
+            ->name('dart-transformer')
             ->hasConfigFile()
             ->hasViews()
-            ->hasMigration('create_migration_table_name_table')
-            ->hasCommand(SkeletonCommand::class);
+            ->hasMigration('create_dart_transformer_table')
+            ->hasCommand(DartTransformerCommand::class);
     }
 }

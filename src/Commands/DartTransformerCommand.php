@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace M2rius\DartTransformer\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class DartTransformerCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'dart-transformer';
 
     public $description = 'My command';
 

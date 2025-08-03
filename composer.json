@@ -1,17 +1,17 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "2rius/dart-transformer",
+    "description": "Laravel package for converting PHP classes and types to Dart equivalents",
     "keywords": [
-        ":vendor_name",
+        "Max-Emil Thorius",
         "laravel",
-        ":package_slug"
+        "dart-transformer"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/2rius/dart-transformer",
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "Max-Emil Thorius",
+            "email": "maxemilthorius@gmail.com",
             "role": "Developer"
         }
     ],
@@ -35,13 +35,13 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "M2rius\\DartTransformer\\": "src/",
+            "M2rius\\DartTransformer\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/",
+            "M2rius\\DartTransformer\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -63,10 +63,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "M2rius\\DartTransformer\\DartTransformerServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "DartTransformer": "M2rius\\DartTransformer\\Facades\\DartTransformer"
             }
         }
     },
