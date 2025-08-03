@@ -105,6 +105,7 @@ php artisan dart:transform App\\Data\\UserData --output=lib/models
 #### Laravel Data Class
 
 PHP:
+
 ```php
 <?php
 
@@ -124,6 +125,7 @@ class UserData extends Data
 ```
 
 Generated Dart:
+
 ```dart
 import 'package:json_annotation/json_annotation.dart';
 
@@ -152,6 +154,7 @@ class UserData {
 #### PHP Enum
 
 PHP:
+
 ```php
 <?php
 
@@ -166,6 +169,7 @@ enum Status: string
 ```
 
 Generated Dart:
+
 ```dart
 import 'package:json_annotation/json_annotation.dart';
 
