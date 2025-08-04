@@ -9,10 +9,12 @@ class DartTransformerCommand extends Command
 {
     public $signature = 'dart:transform
                         {class? : The specific class to transform}
-                        {--output= : Output directory for generated Dart files}
-                        {--discover : Automatically discover and transform all applicable classes}';
+                        {--output= : Output path for generated Dart file(s)}
+                        {--discover : Automatically discover and transform all applicable classes}
+                        {--mode=single : Output mode: single (consolidated file) or separate (individual files)}
+                        {--filename=generated.dart : Filename for single file mode}';
 
-    public $description = 'Transform PHP classes to Dart equivalents';
+    public $description = 'Transform PHP classes to Dart equivalents with consolidated output';
 
     public function handle(): int
     {
@@ -21,29 +23,49 @@ class DartTransformerCommand extends Command
         $className = $this->argument('class');
         $outputPath = $this->option('output');
         $discover = $this->option('discover');
+        $mode = $this->option('mode') ?? 'single';
+        $filename = $this->option('filename');
+
+        // Override config with command options if needed
+        if ($mode !== 'single' || $filename || $outputPath) {
+            $config = array_merge($transformer->config ?? [], [
+                'output' => array_merge($transformer->config['output'] ?? [], [
+                    'mode' => $mode,
+                    'filename' => $filename,
+                ]),
+            ]);
+
+            if ($outputPath) {
+                $config['output']['path'] = $outputPath;
+            }
+
+            $transformer = new \M2rius\DartTransformer\DartTransformer($config);
+        }
 
         if ($discover) {
-            return $this->handleDiscovery($transformer);
+            return $this->handleDiscovery($transformer, $mode);
         }
 
         if ($className) {
-            return $this->handleSingleClass($transformer, $className, $outputPath);
+            return $this->handleSingleClass($transformer, $className, $outputPath, $mode);
         }
 
         $this->info('Please specify a class to transform or use --discover to transform all applicable classes');
         $this->line('');
         $this->line('Examples:');
-        $this->line('  php artisan dart:transform App\\Data\\UserData');
         $this->line('  php artisan dart:transform --discover');
-        $this->line('  php artisan dart:transform App\\Data\\UserData --output=resources/dart/models');
+        $this->line('  php artisan dart:transform --discover --mode=separate');
+        $this->line('  php artisan dart:transform App\\Data\\UserData');
+        $this->line('  php artisan dart:transform App\\Data\\UserData --mode=separate');
+        $this->line('  php artisan dart:transform --discover --output=lib/models --filename=types.dart');
 
         return self::SUCCESS;
     }
 
-    protected function handleSingleClass(DartTransformer $transformer, string $className, ?string $outputPath): int
+    protected function handleSingleClass(DartTransformer $transformer, string $className, ?string $outputPath, string $mode): int
     {
         try {
-            if (! class_exists($className)) {
+            if (! class_exists($className) && ! enum_exists($className)) {
                 $this->error("Class {$className} does not exist");
 
                 return self::FAILURE;
@@ -51,13 +73,20 @@ class DartTransformerCommand extends Command
 
             $this->info("Transforming {$className}...");
 
-            if ($outputPath) {
-                $filePath = $transformer->transformToFile($className, $outputPath);
+            if ($mode === 'single') {
+                // Use consolidated transformation for single mode
+                $filePath = $transformer->transformAllToFile([$className], $outputPath);
+                $this->info("✅ Successfully transformed {$className} to consolidated file");
             } else {
-                $filePath = $transformer->transformToFile($className);
+                // Use individual file transformation
+                if ($outputPath) {
+                    $filePath = $transformer->transformToFile($className, $outputPath);
+                } else {
+                    $filePath = $transformer->transformToFile($className);
+                }
+                $this->info("✅ Successfully transformed {$className}");
             }
 
-            $this->info("✅ Successfully transformed {$className}");
             $this->line("   Generated: {$filePath}");
 
             return self::SUCCESS;
@@ -68,7 +97,7 @@ class DartTransformerCommand extends Command
         }
     }
 
-    protected function handleDiscovery(DartTransformer $transformer): int
+    protected function handleDiscovery(DartTransformer $transformer, string $mode): int
     {
         $this->info('Discovering and transforming classes...');
 
@@ -81,7 +110,11 @@ class DartTransformerCommand extends Command
                 return self::SUCCESS;
             }
 
-            $this->info('✅ Successfully transformed '.count($transformedFiles).' classes:');
+            if ($mode === 'single') {
+                $this->info('✅ Successfully consolidated all discovered classes into 1 file:');
+            } else {
+                $this->info('✅ Successfully transformed '.count($transformedFiles).' classes:');
+            }
 
             foreach ($transformedFiles as $file) {
                 $this->line("   - {$file}");

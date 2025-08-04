@@ -8,7 +8,7 @@
 
 Laravel package for converting PHP classes and types to Dart equivalents, with special support for [Spatie Laravel Data](https://spatie.be/docs/laravel-data/v4/introduction) classes and PHP enums.
 
-This package is heavily inspired by [Spatie's TypeScript Transformer](https://spatie.be/docs/typescript-transformer/v2/introduction), but targets Dart instead of TypeScript.
+This package is heavily inspired by [Spatie's TypeScript Transformer](https://spatie.be/docs/typescript-transformer/v2/introduction), but targets Dart instead of TypeScript. Like the TypeScript transformer, it can find ALL transformable classes and consolidate them into a single output file.
 
 ## Features
 
@@ -18,6 +18,9 @@ This package is heavily inspired by [Spatie's TypeScript Transformer](https://sp
 - 🔧 Configurable output paths and transformers
 - 🎨 Smart type mapping from PHP to Dart
 - ⚡ Artisan command for easy transformation
+- 🔗 Consolidated output - transform ALL classes to a single file
+- 🧠 Automatic dependency resolution between classes
+- 📁 Auto-discovery of transformable classes from configured paths
 
 ## Installation
 
@@ -61,6 +64,8 @@ return [
     'output' => [
         'path' => 'resources/dart',
         'extension' => '.dart',
+        'filename' => 'generated.dart', // Single consolidated output file
+        'mode' => 'single', // 'single' for consolidated file, 'separate' for individual files
     ],
 
     /*
@@ -78,28 +83,39 @@ return [
         'use_nullable_types' => true,
         'use_json_annotation' => true,
         'package_name' => null, // Auto-detect from pubspec.yaml if null
+        'use_namespaces' => true, // Organize output by PHP namespaces
+        'resolve_missing_symbols' => true, // Auto-discover and include dependencies
     ],
 ];
 ```
 
 ## Usage
 
-### Transform a specific class
-
-```bash
-php artisan dart:transform App\\Data\\UserData
-```
-
-### Auto-discover and transform all applicable classes
+### Auto-discover and transform all classes to a single file (default behavior)
 
 ```bash
 php artisan dart:transform --discover
 ```
 
-### Specify custom output directory
+This will find ALL transformable classes and consolidate them into one file (`resources/dart/generated.dart` by default).
+
+### Transform a specific class to the consolidated file
 
 ```bash
-php artisan dart:transform App\\Data\\UserData --output=lib/models
+php artisan dart:transform App\\Data\\UserData
+```
+
+### Use separate files mode
+
+```bash
+php artisan dart:transform --discover --mode=separate
+php artisan dart:transform App\\Data\\UserData --mode=separate
+```
+
+### Customize output path and filename
+
+```bash
+php artisan dart:transform --discover --output=lib/models --filename=types.dart
 ```
 
 ### Example Transformations
@@ -194,13 +210,23 @@ use M2rius\DartTransformer\DartTransformer;
 
 $transformer = app(DartTransformer::class);
 
-// Transform a class and get the Dart code
+// Transform a single class and get the Dart code
 $dartCode = $transformer->transform(App\Data\UserData::class);
 
-// Transform and save to file
+// Transform multiple classes to a single consolidated file
+$filePath = $transformer->transformAllToFile([
+    App\Data\UserData::class,
+    App\Data\ProfileData::class,
+    App\Enums\Status::class,
+]);
+
+// Auto-discover and transform all classes to a single file
+$filePath = $transformer->discoverAndTransformToFile();
+
+// Transform and save to individual files
 $filePath = $transformer->transformToFile(App\Data\UserData::class);
 
-// Auto-discover and transform multiple classes
+// Auto-discover and transform to individual files
 $transformedFiles = $transformer->discoverAndTransform();
 ```
 

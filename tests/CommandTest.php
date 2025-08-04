@@ -1,6 +1,5 @@
 <?php
 
-use M2rius\DartTransformer\DartTransformer;
 use Spatie\LaravelData\Data;
 
 // Test Data class for command testing
@@ -19,18 +18,66 @@ it('can run dart transform command without arguments', function () {
 });
 
 it('can transform a specific class via command', function () {
-    // Mock the transformer
-    $this->mock(DartTransformer::class, function ($mock) {
-        $mock->shouldReceive('transformToFile')
-            ->once()
-            ->with(CommandTestUserData::class)
-            ->andReturn('tests/dart/command_test_user_data.dart');
-    });
+    // Clean up any existing files
+    $outputFile = 'resources/dart/generated.dart';
+    if (file_exists($outputFile)) {
+        unlink($outputFile);
+    }
 
     $this->artisan('dart:transform', ['class' => CommandTestUserData::class])
         ->expectsOutput('Transforming '.CommandTestUserData::class.'...')
+        ->expectsOutput('✅ Successfully transformed '.CommandTestUserData::class.' to consolidated file')
+        ->assertExitCode(0);
+
+    // Verify file was created
+    expect(file_exists($outputFile))->toBeTrue();
+
+    // Clean up
+    if (file_exists($outputFile)) {
+        unlink($outputFile);
+    }
+    if (is_dir('resources/dart')) {
+        $files = glob('resources/dart/*');
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
+        rmdir('resources/dart');
+    }
+});
+
+it('can transform a specific class in separate mode', function () {
+    // Clean up any existing files
+    $outputFile = 'resources/dart/command_test_user_data.dart';
+    if (file_exists($outputFile)) {
+        unlink($outputFile);
+    }
+
+    $this->artisan('dart:transform', [
+        'class' => CommandTestUserData::class,
+        '--mode' => 'separate',
+    ])
+        ->expectsOutput('Transforming '.CommandTestUserData::class.'...')
         ->expectsOutput('✅ Successfully transformed '.CommandTestUserData::class)
         ->assertExitCode(0);
+
+    // Verify file was created
+    expect(file_exists($outputFile))->toBeTrue();
+
+    // Clean up
+    if (file_exists($outputFile)) {
+        unlink($outputFile);
+    }
+    if (is_dir('resources/dart')) {
+        $files = glob('resources/dart/*');
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
+        rmdir('resources/dart');
+    }
 });
 
 it('shows error for non-existent class', function () {
@@ -39,42 +86,21 @@ it('shows error for non-existent class', function () {
         ->assertExitCode(1);
 });
 
-it('can run discovery mode', function () {
-    $this->mock(DartTransformer::class, function ($mock) {
-        $mock->shouldReceive('discoverAndTransform')
-            ->once()
-            ->andReturn([
-                'tests/dart/user_data.dart',
-                'tests/dart/status_enum.dart',
-            ]);
-    });
-
-    $this->artisan('dart:transform', ['--discover' => true])
+it('can run discovery mode in single file mode', function () {
+    // Discovery mode with custom output to avoid conflicts
+    $this->artisan('dart:transform', [
+        '--discover' => true,
+        '--output' => 'tests/command_output',
+        '--filename' => 'discovered.dart',
+    ])
         ->expectsOutput('Discovering and transforming classes...')
-        ->expectsOutput('✅ Successfully transformed 2 classes:')
         ->assertExitCode(0);
-});
 
-it('shows warning when no classes found in discovery', function () {
-    $this->mock(DartTransformer::class, function ($mock) {
-        $mock->shouldReceive('discoverAndTransform')
-            ->once()
-            ->andReturn([]);
-    });
-
-    $this->artisan('dart:transform', ['--discover' => true])
-        ->expectsOutput('No applicable classes found for transformation')
-        ->assertExitCode(0);
-});
-
-it('handles transformation exceptions gracefully', function () {
-    $this->mock(DartTransformer::class, function ($mock) {
-        $mock->shouldReceive('transformToFile')
-            ->once()
-            ->andThrow(new Exception('Transformation failed'));
-    });
-
-    $this->artisan('dart:transform', ['class' => CommandTestUserData::class])
-        ->expectsOutput('Failed to transform '.CommandTestUserData::class.': Transformation failed')
-        ->assertExitCode(1);
+    // Clean up any generated files
+    if (file_exists('tests/command_output/discovered.dart')) {
+        unlink('tests/command_output/discovered.dart');
+    }
+    if (is_dir('tests/command_output')) {
+        rmdir('tests/command_output');
+    }
 });

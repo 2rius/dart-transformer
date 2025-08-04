@@ -1,6 +1,5 @@
 <?php
 
-// config for M2rius/DartTransformer
 return [
     /*
      * Automatically discover and transform classes that match these patterns
@@ -26,6 +25,8 @@ return [
     'output' => [
         'path' => 'resources/dart',
         'extension' => '.dart',
+        'filename' => 'generated.dart', // Single consolidated output file
+        'mode' => 'single', // 'single' for consolidated file, 'separate' for individual files
     ],
 
     /*
@@ -43,5 +44,7 @@ return [
         'use_nullable_types' => true,
         'use_json_annotation' => true,
         'package_name' => null, // Auto-detect from pubspec.yaml if null
+        'use_namespaces' => true, // Organize output by PHP namespaces
+        'resolve_missing_symbols' => true, // Auto-discover and include dependencies
     ],
 ];
