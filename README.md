@@ -1,8 +1,10 @@
 # Dart Transformer
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/2rius/dart-transformer.svg?style=flat-square)](https://packagist.org/packages/2rius/dart-transformer)
-[![Tests](https://img.shields.io/github/actions/workflow/status/2rius/dart-transformer/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/2rius/dart-transformer/actions/workflows/run-tests.yml)
-[![Total Downloads](https://img.shields.io/packagist/dt/2rius/dart-transformer.svg?style=flat-square)](https://packagist.org/packages/2rius/dart-transformer)
+<!-- [![Latest Version on Packagist](https://img.shields.io/packagist/v/2rius/dart-transformer.svg?style=flat-square)](https://packagist.org/packages/2rius/dart-transformer) -->
+[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/2rius/dart-transformer/run-tests.yml?branch=main&label=Tests&style=flat-square)](https://github.com/2rius/dart-transformer/actions/workflows/run-tests.yml)
+[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/2rius/dart-transformer/fix-php-code-style-issues.yml?branch=main&label=Code%20style&style=flat-square)](https://github.com/2rius/dart-transformer/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
+[![Github PHPStan Action Status](https://img.shields.io/github/actions/workflow/status/2rius/dart-transformer/phpstan.yml?branch=main&label=PHPStan&style=flat-square)](https://github.com/2rius/dart-transformer/actions/workflows/phpstan.yml)
+<!-- [![Total Downloads](https://img.shields.io/packagist/dt/2rius/dart-transformer.svg?style=flat-square)](https://packagist.org/packages/2rius/dart-transformer) -->
 
 Laravel package for converting PHP classes and types to Dart equivalents, with special support for [Spatie Laravel Data](https://spatie.be/docs/laravel-data/v4/introduction) classes and PHP enums.
 
