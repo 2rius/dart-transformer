@@ -17,5 +17,3 @@ class DartFormatter implements Formatter
         }
     }
 }
-
-

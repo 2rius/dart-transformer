@@ -79,7 +79,7 @@ class DartTransformer
         }
 
         $header = $this->buildFileHeader();
-        $content = $header . implode("\n\n", $definitions) . "\n";
+        $content = $header.implode("\n\n", $definitions)."\n";
 
         file_put_contents($path, $content);
 
@@ -123,7 +123,7 @@ class DartTransformer
         }
 
         try {
-            $formatter = new $formatterClass();
+            $formatter = new $formatterClass;
             if (method_exists($formatter, 'format')) {
                 $formatter->format($filePath);
             }
@@ -207,13 +207,13 @@ class DartTransformer
             }
 
             if (preg_match('/^\s*(?:final\s+)?class\s+(\w+)/m', $contents, $classMatch)) {
-                $classes[] = trim($nsMatch[1]) . '\\\\' . trim($classMatch[1]);
+                $classes[] = trim($nsMatch[1]).'\\\\'.trim($classMatch[1]);
 
                 continue;
             }
 
             if (preg_match('/^\s*enum\s+(\w+)/m', $contents, $enumMatch)) {
-                $classes[] = trim($nsMatch[1]) . '\\\\' . trim($enumMatch[1]);
+                $classes[] = trim($nsMatch[1]).'\\\\'.trim($enumMatch[1]);
 
                 continue;
             }
