@@ -64,10 +64,7 @@
         "laravel": {
             "providers": [
                 "M2rius\\DartTransformer\\DartTransformerServiceProvider"
-            ],
-            "aliases": {
-                "DartTransformer": "M2rius\\DartTransformer\\Facades\\DartTransformer"
-            }
+            ]
         }
     },
     "minimum-stability": "dev",

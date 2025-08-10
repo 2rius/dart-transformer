@@ -54,8 +54,8 @@ class DartTransformer
     protected function registerDefaultTransformers(): void
     {
         $transformerClasses = $this->config['transformers'] ?? [
-            'data_classes' => DataClassTransformer::class,
-            'enums' => EnumTransformer::class,
+            DataClassTransformer::class,
+            EnumTransformer::class,
         ];
 
         foreach ($transformerClasses as $transformerClass) {
@@ -79,7 +79,7 @@ class DartTransformer
         }
 
         $header = $this->buildFileHeader();
-        $content = $header.implode("\n\n", $definitions)."\n";
+        $content = $header.implode("\n", $definitions)."\n";
 
         file_put_contents($path, $content);
 
