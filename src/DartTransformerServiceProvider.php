@@ -21,12 +21,8 @@ class DartTransformerServiceProvider extends PackageServiceProvider
             ->hasCommand(DartTransformerCommand::class);
     }
 
-    public function register(): void
+    public function packageRegistered(): void
     {
-        parent::register();
-
-        $this->app->singleton(DartTransformer::class, function ($app) {
-            return new DartTransformer($app['config']['dart-transformer'] ?? []);
-        });
+        $this->app->singleton(DartTransformer::class, fn () => new DartTransformer(config('dart-transformer', [])));
     }
 }
