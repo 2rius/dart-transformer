@@ -33,19 +33,16 @@ class DataClassTransformer extends BaseTransformer
 
         // Add properties
         foreach ($properties as $property) {
-            $dartCode[] = "  {$property}";
+            $dartCode[] = $property;
         }
 
         // Add constructor
-        $dartCode[] = '';
         $dartCode[] = $this->generateConstructor($className, $properties);
 
         // Add JSON methods if enabled
         if ($this->config['dart']['use_json_annotation'] ?? true) {
-            $dartCode[] = '';
-            $dartCode[] = "  factory {$className}.fromJson(Map<String, dynamic> json) => _\${$className}FromJson(json);";
-            $dartCode[] = '';
-            $dartCode[] = "  Map<String, dynamic> toJson() => _\${$className}ToJson(this);";
+            $dartCode[] = "factory {$className}.fromJson(Map<String, dynamic> json)=>_\${$className}FromJson(json);";
+            $dartCode[] = "Map<String, dynamic> toJson()=>_\${$className}ToJson(this);";
         }
 
         $dartCode[] = '}';
@@ -114,10 +111,10 @@ class DataClassTransformer extends BaseTransformer
         }
 
         if (empty($propertyNames)) {
-            return "  const {$className}();";
+            return "const {$className}();";
         }
 
-        return "  const {$className}({\n    ".implode(",\n    ", $propertyNames).",\n  });";
+        return "const {$className}({\n".implode(",\n", $propertyNames).",\n});";
     }
 
     // No longer needed for aggregated output

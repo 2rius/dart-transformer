@@ -53,9 +53,9 @@ class EnumTransformer extends BaseTransformer
                 $value = $case instanceof ReflectionEnumBackedCase
                     ? $case->getBackingValue()
                     : $case->getName();
-                $dartCode[] = "  @JsonValue('{$value}')";
+                $dartCode[] = "@JsonValue('{$value}')";
             }
-            $dartCode[] = "  {$case->getName()},";
+            $dartCode[] = "{$case->getName()},";
         }
 
         $dartCode[] = '}';
@@ -75,7 +75,7 @@ class EnumTransformer extends BaseTransformer
         $enumReflection = new ReflectionEnum($reflection->getName());
         foreach ($enumReflection->getCases() as $case) {
             $value = $case instanceof ReflectionEnumBackedCase ? $case->getBackingValue() : $case->getName();
-            $lines[] = "  static const String {$case->getName()} = '$value';";
+            $lines[] = "static const String {$case->getName()} = '$value';";
         }
 
         $lines[] = '}';
@@ -96,10 +96,10 @@ class EnumTransformer extends BaseTransformer
 
         foreach ($constants as $name => $value) {
             if (is_string($value)) {
-                $dartCode[] = "  @JsonValue('{$value}')";
-                $dartCode[] = "  {$name},";
+                $dartCode[] = "@JsonValue('{$value}')";
+                $dartCode[] = "{$name},";
             } else {
-                $dartCode[] = "  {$name},";
+                $dartCode[] = "{$name},";
             }
         }
 

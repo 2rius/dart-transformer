@@ -26,6 +26,9 @@ abstract class BaseTransformer implements TransformerContract
             }
         }
 
+        $phpType = ltrim($phpType, '\\');
+        $shortClassName = $this->shortClassName($phpType);
+
         return match ($phpType) {
             'int' => 'int',
             'float', 'double' => 'double',
@@ -34,8 +37,19 @@ abstract class BaseTransformer implements TransformerContract
             'array' => 'List<dynamic>',
             'object' => 'Map<String, dynamic>',
             'mixed' => 'dynamic',
-            default => $phpType, // For custom classes, keep as is
+            // For custom classes, map FQCN to short class name (RoleData), no namespaces in Dart
+            default => $shortClassName,
         };
+    }
+
+    protected function shortClassName(string $fullyQualifiedClassName): string
+    {
+        $position = strrpos($fullyQualifiedClassName, '\\');
+        if ($position === false) {
+            return $fullyQualifiedClassName;
+        }
+
+        return substr($fullyQualifiedClassName, $position + 1);
     }
 
     protected function makeNullable(string $dartType): string

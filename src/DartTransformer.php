@@ -79,7 +79,7 @@ class DartTransformer
         }
 
         $header = $this->buildFileHeader();
-        $content = $header.implode("\n\n", $definitions)."\n";
+        $content = $header.implode("\n", $definitions)."\n";
 
         file_put_contents($path, $content);
 
