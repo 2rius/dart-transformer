@@ -32,8 +32,8 @@ it('aggregates transformed code into a single output', function () {
             'use_json_annotation' => true,
         ],
         'transformers' => [
-            'data_classes' => DataClassTransformer::class,
-            'enums' => EnumTransformer::class,
+            DataClassTransformer::class,
+            EnumTransformer::class,
         ],
     ];
 

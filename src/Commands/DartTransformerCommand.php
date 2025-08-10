@@ -7,7 +7,10 @@ use M2rius\DartTransformer\DartTransformer;
 
 class DartTransformerCommand extends Command
 {
-    public $signature = 'dart:transform';
+    public $signature = 'dart:transform
+                            {--path= : Specify a path with classes to transform}
+                            {--output= : Use another file to output}
+                            {--format : Use Dart formatter to format the output}';
 
     public $description = 'Generate a single aggregated Dart file with all transformable PHP data classes and enums';
 

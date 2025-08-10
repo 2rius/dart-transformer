@@ -1,6 +1,5 @@
 <?php
 
-// config for M2rius/DartTransformer
 return [
     /*
      * The paths where dart-transformer will look for PHP classes to transform.
@@ -23,8 +22,8 @@ return [
      * Transformers take PHP classes as input and will output a Dart representation.
      */
     'transformers' => [
-        'data_classes' => \M2rius\DartTransformer\Transformers\DataClassTransformer::class,
-        'enums' => \M2rius\DartTransformer\Transformers\EnumTransformer::class,
+        \M2rius\DartTransformer\Transformers\DataClassTransformer::class,
+        \M2rius\DartTransformer\Transformers\EnumTransformer::class,
     ],
 
     /*
@@ -48,9 +47,9 @@ return [
 
     /*
      * The generated Dart file can be formatted. Provide a formatter class name
-     * if desired; Dart formatter is used by default.
+     * if desired; null is used by default.
      */
-    'formatter' => \M2rius\DartTransformer\Formatters\DartFormatter::class,
+    'formatter' => null,
 
     /*
      * Enums can be generated as native Dart enums or as a class with string constants.

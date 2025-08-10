@@ -54,8 +54,8 @@ class DartTransformer
     protected function registerDefaultTransformers(): void
     {
         $transformerClasses = $this->config['transformers'] ?? [
-            'data_classes' => DataClassTransformer::class,
-            'enums' => EnumTransformer::class,
+            DataClassTransformer::class,
+            EnumTransformer::class,
         ];
 
         foreach ($transformerClasses as $transformerClass) {
