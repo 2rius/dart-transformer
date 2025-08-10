@@ -18,6 +18,26 @@ class DartTransformer
         $this->registerDefaultTransformers();
     }
 
+    public function generate(?array $classes = null): array
+    {
+        $classes = $classes ?? $this->collectTransformableClasses();
+
+        $definitions = [];
+
+        foreach ($classes as $className) {
+            try {
+                $definitions[] = $this->transform($className);
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        $outputPath = $this->getAggregatedOutputPath();
+        $this->writeAggregatedFile($outputPath, $definitions);
+
+        return ['path' => $outputPath, 'count' => count($definitions)];
+    }
+
     public function transform(string $className): string
     {
         $reflection = new ReflectionClass($className);
@@ -29,46 +49,6 @@ class DartTransformer
         }
 
         throw new \InvalidArgumentException("No transformer found for class: {$className}");
-    }
-
-    public function transformToFile(string $className, ?string $outputPath = null): string
-    {
-        $dartCode = $this->transform($className);
-
-        if (! $outputPath) {
-            $outputPath = $this->getDefaultOutputPath($className);
-        }
-
-        $directory = dirname($outputPath);
-        if (! is_dir($directory)) {
-            mkdir($directory, 0755, true);
-        }
-
-        file_put_contents($outputPath, $dartCode);
-
-        return $outputPath;
-    }
-
-    public function discoverAndTransform(?array $paths = null): array
-    {
-        $paths = $paths ?? $this->getDiscoveryPaths();
-        $transformedFiles = [];
-
-        foreach ($paths as $path) {
-            $classes = $this->discoverClasses($path);
-
-            foreach ($classes as $className) {
-                try {
-                    $outputPath = $this->transformToFile($className);
-                    $transformedFiles[] = $outputPath;
-                } catch (\Exception $e) {
-                    // Log error or handle silently
-                    continue;
-                }
-            }
-        }
-
-        return $transformedFiles;
     }
 
     protected function registerDefaultTransformers(): void
@@ -83,45 +63,186 @@ class DartTransformer
         }
     }
 
-    protected function getDefaultOutputPath(string $className): string
+    protected function getAggregatedOutputPath(): string
     {
-        $basePath = $this->config['output']['path'] ?? 'resources/dart';
-        $extension = $this->config['output']['extension'] ?? '.dart';
+        $outputFile = $this->config['output_file']
+            ?? (function_exists('resource_path') ? resource_path('dart/generated.dart') : 'resources/dart/generated.dart');
 
-        $fileName = $this->classNameToFileName($className);
-
-        return $basePath.'/'.$fileName.$extension;
+        return $outputFile;
     }
 
-    protected function classNameToFileName(string $className): string
+    protected function writeAggregatedFile(string $path, array $definitions): void
     {
-        $parts = explode('\\', $className);
-        $className = end($parts);
+        $directory = dirname($path);
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
 
-        // Convert PascalCase to snake_case
-        return strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $className));
+        $header = $this->buildFileHeader();
+        $content = $header.implode("\n\n", $definitions)."\n";
+
+        file_put_contents($path, $content);
+
+        $this->applyFormatter($path);
+    }
+
+    protected function buildFileHeader(): string
+    {
+        $lines = [];
+
+        $customHeader = $this->config['dart']['header'] ?? null;
+        if (is_string($customHeader) && trim($customHeader) !== '') {
+            $lines[] = rtrim($customHeader);
+            $lines[] = '';
+        }
+
+        $lines[] = '// GENERATED CODE - DO NOT MODIFY BY HAND';
+        $lines[] = '// ignore_for_file: type=lint';
+        $lines[] = '';
+
+        if ($this->config['dart']['use_json_annotation'] ?? true) {
+            $lines[] = "import 'package:json_annotation/json_annotation.dart';";
+            $file = basename($this->getAggregatedOutputPath());
+            $g = preg_replace('/\.dart$/', '.g.dart', $file);
+            $lines[] = "part '$g';";
+            $lines[] = '';
+        }
+
+        return implode("\n", $lines);
+    }
+
+    protected function applyFormatter(string $filePath): void
+    {
+        $formatterClass = $this->config['formatter'] ?? null;
+        if (! is_string($formatterClass) || $formatterClass === '') {
+            return;
+        }
+
+        if (! class_exists($formatterClass)) {
+            return;
+        }
+
+        try {
+            $formatter = new $formatterClass;
+            if (method_exists($formatter, 'format')) {
+                $formatter->format($filePath);
+            }
+        } catch (\Throwable $e) {
+            // Silently ignore formatting errors
+        }
     }
 
     protected function getDiscoveryPaths(): array
     {
-        $paths = [];
+        $paths = $this->config['auto_discover_types'] ?? [];
 
-        if ($this->config['auto_discover']['data']['enabled'] ?? false) {
-            $paths = array_merge($paths, $this->config['auto_discover']['data']['paths'] ?? []);
+        return array_values(array_filter($paths));
+    }
+
+    protected function collectTransformableClasses(): array
+    {
+        $paths = $this->getDiscoveryPaths();
+        $allFoundClasses = [];
+        foreach ($paths as $path) {
+            $allFoundClasses = array_merge($allFoundClasses, $this->discoverClasses($path));
         }
 
-        if ($this->config['auto_discover']['enums']['enabled'] ?? false) {
-            $paths = array_merge($paths, $this->config['auto_discover']['enums']['paths'] ?? []);
+        $allFoundClasses = array_values(array_unique($allFoundClasses));
+
+        $collectors = $this->config['collectors'] ?? [];
+        if (empty($collectors)) {
+            return $allFoundClasses; // fallback: everything discovered
         }
 
-        return $paths;
+        $selected = [];
+        foreach ($collectors as $collectorClass) {
+            if (! class_exists($collectorClass)) {
+                continue;
+            }
+            $collector = new $collectorClass($this->config);
+            if (! method_exists($collector, 'shouldCollect')) {
+                continue;
+            }
+            foreach ($allFoundClasses as $fqcn) {
+                try {
+                    $reflection = new ReflectionClass($fqcn);
+                } catch (\Throwable $e) {
+                    continue;
+                }
+                if ($collector->shouldCollect($reflection)) {
+                    $selected[] = $fqcn;
+                }
+            }
+        }
+
+        return array_values(array_unique($selected));
     }
 
     protected function discoverClasses(string $path): array
     {
-        // This is a simplified implementation
-        // In a real implementation, you'd use reflection or file scanning
-        // to discover classes in the given path
-        return [];
+        $classes = [];
+
+        $basePath = is_callable($path) ? (string) $path() : $path;
+        // Prefer given path if it exists; otherwise try resolving via base_path
+        if (! is_dir($basePath) && function_exists('base_path')) {
+            $resolved = base_path($basePath);
+            if (is_dir($resolved)) {
+                $basePath = $resolved;
+            }
+        }
+        if (! is_dir($basePath)) {
+            return [];
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($basePath, \FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->getExtension() !== 'php') {
+                continue;
+            }
+
+            $contents = @file_get_contents($file->getPathname());
+            if ($contents === false) {
+                continue;
+            }
+
+            if (! preg_match('/^\s*namespace\s+([^;]+);/m', $contents, $nsMatch)) {
+                continue;
+            }
+
+            if (preg_match('/^\s*(?:final\s+)?class\s+(\w+)/m', $contents, $classMatch)) {
+                $fqcn = trim($nsMatch[1]).'\\'.trim($classMatch[1]);
+                if (! class_exists($fqcn)) {
+                    @require_once $file->getPathname();
+                }
+                $classes[] = $fqcn;
+
+                continue;
+            }
+
+            if (preg_match('/^\s*enum\s+(\w+)/m', $contents, $enumMatch)) {
+                $fqcn = trim($nsMatch[1]).'\\'.trim($enumMatch[1]);
+                if (! class_exists($fqcn)) {
+                    @require_once $file->getPathname();
+                }
+                $classes[] = $fqcn;
+
+                continue;
+            }
+        }
+
+        $valid = [];
+        foreach ($classes as $fqcn) {
+            try {
+                new ReflectionClass($fqcn);
+                $valid[] = $fqcn;
+            } catch (\Throwable $e) {
+                // skip non-loadable classes
+            }
+        }
+
+        return $valid;
     }
 }

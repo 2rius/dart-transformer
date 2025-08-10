@@ -37,70 +37,62 @@ This is the contents of the published config file:
 
 ```php
 return [
-    /*
-     * Automatically discover and transform classes that match these patterns
-     */
-    'auto_discover' => [
-        'data' => [
-            'enabled' => true,
-            'paths' => [
-                'app/Data',
-            ],
-        ],
-        'enums' => [
-            'enabled' => true,
-            'paths' => [
-                'app/Enums',
-            ],
-        ],
+    // The paths where dart-transformer will look for PHP classes to transform.
+    'auto_discover_types' => [
+        app_path(),
     ],
 
-    /*
-     * Output settings
-     */
-    'output' => [
-        'path' => 'resources/dart',
-        'extension' => '.dart',
+    // Collectors decide which classes should be transformed.
+    'collectors' => [
+        M2rius\DartTransformer\Collectors\DefaultCollector::class,
+        M2rius\DartTransformer\Collectors\EnumCollector::class,
     ],
 
-    /*
-     * Transformation options
-     */
+    // Transformers take PHP classes and output their Dart representation.
     'transformers' => [
         'data_classes' => \M2rius\DartTransformer\Transformers\DataClassTransformer::class,
         'enums' => \M2rius\DartTransformer\Transformers\EnumTransformer::class,
     ],
 
-    /*
-     * Dart specific options
-     */
+    // Default type replacements for PHP types to Dart types.
+    'default_type_replacements' => [
+        DateTimeInterface::class => 'String',
+        DateTimeImmutable::class => 'String',
+        DateTime::class => 'String',
+        Carbon\CarbonInterface::class => 'String',
+        Carbon\CarbonImmutable::class => 'String',
+        Carbon\Carbon::class => 'String',
+    ],
+
+    // The package will write the generated Dart to this file.
+    'output_file' => resource_path('dart/generated.dart'),
+
+    // Optionally configure a formatter (none by default)
+    'formatter' => null,
+
+    // Generate native Dart enums or string constants
+    'transform_to_native_enums' => true,
+
+    // Dart-specific options
     'dart' => [
         'use_nullable_types' => true,
         'use_json_annotation' => true,
-        'package_name' => null, // Auto-detect from pubspec.yaml if null
+        'header' => null,
     ],
 ];
 ```
 
 ## Usage
 
-### Transform a specific class
+### Generate aggregated Dart definitions
+
+Run the command to generate a single aggregated file with all transformable classes and enums:
 
 ```bash
-php artisan dart:transform App\\Data\\UserData
+php artisan dart:transform
 ```
 
-### Auto-discover and transform all applicable classes
-
-```bash
-php artisan dart:transform --discover
-```
-
-### Specify custom output directory
-
-```bash
-php artisan dart:transform App\\Data\\UserData --output=lib/models
-```
+By default this writes to `resources/dart/generated.dart`.
 
 ### Example Transformations
 
@@ -187,21 +179,14 @@ enum Status {
 
 ### Programmatic Usage
 
-You can also use the transformer programmatically:
-
 ```php
 use M2rius\DartTransformer\DartTransformer;
 
 $transformer = app(DartTransformer::class);
 
-// Transform a class and get the Dart code
-$dartCode = $transformer->transform(App\Data\UserData::class);
-
-// Transform and save to file
-$filePath = $transformer->transformToFile(App\Data\UserData::class);
-
-// Auto-discover and transform multiple classes
-$transformedFiles = $transformer->discoverAndTransform();
+// Generate aggregated file; optionally pass an explicit list of classes
+$result = $transformer->generate();
+// ['path' => 'resources/dart/generated.dart', 'count' => 42]
 ```
 
 ## Configuration

@@ -19,7 +19,11 @@ class EnumTransformer extends BaseTransformer
         $className = $this->getClassName($reflection);
 
         if ($reflection->isEnum()) {
-            return $this->transformNativeEnum($reflection);
+            $useNative = $this->config['transform_to_native_enums'] ?? true;
+
+            return $useNative
+                ? $this->transformNativeEnum($reflection)
+                : $this->transformEnumAsStringConstants($reflection);
         }
 
         if ($this->isLaravelEnum($reflection)) {
@@ -35,11 +39,7 @@ class EnumTransformer extends BaseTransformer
 
         $dartCode = [];
 
-        // Add JSON annotation if enabled
-        if ($this->config['dart']['use_json_annotation'] ?? true) {
-            $dartCode[] = "import 'package:json_annotation/json_annotation.dart';";
-            $dartCode[] = '';
-        }
+        // Aggregated file will contain imports
 
         $dartCode[] = "enum {$className} {";
 
@@ -63,6 +63,26 @@ class EnumTransformer extends BaseTransformer
         return implode("\n", $dartCode);
     }
 
+    protected function transformEnumAsStringConstants(ReflectionClass $reflection): string
+    {
+        $className = $this->getClassName($reflection);
+        $lines = [];
+        if ($this->config['dart']['use_json_annotation'] ?? true) {
+            // imports are in aggregated header
+        }
+        $lines[] = 'class '.$className.' {';
+
+        $enumReflection = new ReflectionEnum($reflection->getName());
+        foreach ($enumReflection->getCases() as $case) {
+            $value = $case instanceof ReflectionEnumBackedCase ? $case->getBackingValue() : $case->getName();
+            $lines[] = "  static const String {$case->getName()} = '$value';";
+        }
+
+        $lines[] = '}';
+
+        return implode("\n", $lines);
+    }
+
     protected function transformLaravelEnum(ReflectionClass $reflection): string
     {
         $className = $this->getClassName($reflection);
@@ -70,11 +90,7 @@ class EnumTransformer extends BaseTransformer
 
         $dartCode = [];
 
-        // Add JSON annotation if enabled
-        if ($this->config['dart']['use_json_annotation'] ?? true) {
-            $dartCode[] = "import 'package:json_annotation/json_annotation.dart';";
-            $dartCode[] = '';
-        }
+        // Aggregated file will contain imports
 
         $dartCode[] = "enum {$className} {";
 
