@@ -78,8 +78,8 @@ it('throws exception for unsupported class', function () {
 it('can register custom transformers', function () {
     $config = [
         'transformers' => [
-            'data_classes' => \M2rius\DartTransformer\Transformers\DataClassTransformer::class,
-            'enums' => \M2rius\DartTransformer\Transformers\EnumTransformer::class,
+            \M2rius\DartTransformer\Transformers\DataClassTransformer::class,
+            \M2rius\DartTransformer\Transformers\EnumTransformer::class,
         ],
     ];
 

@@ -29,7 +29,7 @@ it('writes header and runs formatter on generated file', function () {
             'use_json_annotation' => true,
         ],
         'transformers' => [
-            'data_classes' => \M2rius\DartTransformer\Transformers\DataClassTransformer::class,
+            \M2rius\DartTransformer\Transformers\DataClassTransformer::class,
         ],
     ];
 
