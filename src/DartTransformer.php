@@ -183,7 +183,13 @@ class DartTransformer
         $classes = [];
 
         $basePath = is_callable($path) ? (string) $path() : $path;
-        $basePath = function_exists('base_path') ? base_path($basePath) : $basePath;
+        // Prefer given path if it exists; otherwise try resolving via base_path
+        if (! is_dir($basePath) && function_exists('base_path')) {
+            $resolved = base_path($basePath);
+            if (is_dir($resolved)) {
+                $basePath = $resolved;
+            }
+        }
         if (! is_dir($basePath)) {
             return [];
         }
@@ -207,13 +213,21 @@ class DartTransformer
             }
 
             if (preg_match('/^\s*(?:final\s+)?class\s+(\w+)/m', $contents, $classMatch)) {
-                $classes[] = trim($nsMatch[1]).'\\\\'.trim($classMatch[1]);
+                $fqcn = trim($nsMatch[1]).'\\'.trim($classMatch[1]);
+                if (! class_exists($fqcn)) {
+                    @require_once $file->getPathname();
+                }
+                $classes[] = $fqcn;
 
                 continue;
             }
 
             if (preg_match('/^\s*enum\s+(\w+)/m', $contents, $enumMatch)) {
-                $classes[] = trim($nsMatch[1]).'\\\\'.trim($enumMatch[1]);
+                $fqcn = trim($nsMatch[1]).'\\'.trim($enumMatch[1]);
+                if (! class_exists($fqcn)) {
+                    @require_once $file->getPathname();
+                }
+                $classes[] = $fqcn;
 
                 continue;
             }

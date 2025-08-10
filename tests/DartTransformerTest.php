@@ -56,9 +56,7 @@ it('aggregates transformed code into a single output', function () {
 
     // cleanup
     unlink('tests/dart/generated.dart');
-    if (is_dir('tests/dart')) {
-        rmdir('tests/dart');
-    }
+    @rmdir('tests/dart');
 });
 
 it('can generate enums as string constants when disabled native enums', function () {
@@ -86,7 +84,5 @@ it('can generate enums as string constants when disabled native enums', function
 
     // cleanup
     unlink('tests/dart/generated.dart');
-    if (is_dir('tests/dart')) {
-        rmdir('tests/dart');
-    }
+    @rmdir('tests/dart');
 });
