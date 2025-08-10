@@ -9,5 +9,3 @@ class FqcnUnderscoredNamingStrategy implements NamingStrategy
         return str_replace('\\', '_', ltrim($fqcn, '\\'));
     }
 }
-
-

@@ -14,5 +14,3 @@ class ShortClassNamingStrategy implements NamingStrategy
         return substr($fqcn, $position + 1);
     }
 }
-
-

@@ -49,9 +49,9 @@ abstract class BaseTransformer implements TransformerContract
             $strategyClass = \M2rius\DartTransformer\Naming\ShortClassNamingStrategy::class;
         }
 
-        $strategy = new $strategyClass();
+        $strategy = new $strategyClass;
         if (! $strategy instanceof \M2rius\DartTransformer\Naming\NamingStrategy) {
-            $strategy = new \M2rius\DartTransformer\Naming\ShortClassNamingStrategy();
+            $strategy = new \M2rius\DartTransformer\Naming\ShortClassNamingStrategy;
         }
 
         return $strategy->transform($fqcn);

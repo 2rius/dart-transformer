@@ -9,5 +9,3 @@ interface NamingStrategy
      */
     public function transform(string $fqcn): string;
 }
-
-
