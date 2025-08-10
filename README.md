@@ -37,35 +37,43 @@ This is the contents of the published config file:
 
 ```php
 return [
-    // Automatically discover and transform classes
-    'auto_discover' => [
-        'data' => [
-            'enabled' => true,
-            'paths' => [
-                'app/Data',
-            ],
-        ],
-        'enums' => [
-            'enabled' => true,
-            'paths' => [
-                'app/Enums',
-            ],
-        ],
+    // The paths where dart-transformer will look for PHP classes to transform.
+    'auto_discover_types' => [
+        app_path(),
     ],
 
-    // Aggregated output
-    'output' => [
-        'path' => 'resources/dart',
-        'file' => 'generated.dart',
+    // Collectors decide which classes should be transformed.
+    'collectors' => [
+        M2rius\DartTransformer\Collectors\DefaultCollector::class,
+        M2rius\DartTransformer\Collectors\EnumCollector::class,
     ],
 
-    // Transformers
+    // Transformers take PHP classes and output their Dart representation.
     'transformers' => [
         'data_classes' => \M2rius\DartTransformer\Transformers\DataClassTransformer::class,
         'enums' => \M2rius\DartTransformer\Transformers\EnumTransformer::class,
     ],
 
-    // Dart specific options
+    // Default type replacements for PHP types to Dart types.
+    'default_type_replacements' => [
+        DateTimeInterface::class => 'String',
+        DateTimeImmutable::class => 'String',
+        DateTime::class => 'String',
+        Carbon\CarbonInterface::class => 'String',
+        Carbon\CarbonImmutable::class => 'String',
+        Carbon\Carbon::class => 'String',
+    ],
+
+    // The package will write the generated Dart to this file.
+    'output_file' => resource_path('dart/generated.dart'),
+
+    // Optionally configure a formatter (none by default)
+    'formatter' => null,
+
+    // Generate native Dart enums or string constants
+    'transform_to_native_enums' => true,
+
+    // Dart-specific options
     'dart' => [
         'use_nullable_types' => true,
         'use_json_annotation' => true,

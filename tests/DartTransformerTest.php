@@ -26,10 +26,7 @@ enum TestStatus: string
 
 it('aggregates transformed code into a single output', function () {
     $config = [
-        'output' => [
-            'path' => 'tests/dart',
-            'file' => 'generated.dart',
-        ],
+        'output_file' => 'tests/dart/generated.dart',
         'dart' => [
             'use_nullable_types' => true,
             'use_json_annotation' => true,
@@ -56,6 +53,36 @@ it('aggregates transformed code into a single output', function () {
     $content = file_get_contents('tests/dart/generated.dart');
     expect($content)->toContain('class TestUserData');
     expect($content)->toContain('enum TestStatus');
+
+    // cleanup
+    unlink('tests/dart/generated.dart');
+    if (is_dir('tests/dart')) {
+        rmdir('tests/dart');
+    }
+});
+
+it('can generate enums as string constants when disabled native enums', function () {
+    $config = [
+        'output_file' => 'tests/dart/generated.dart',
+        'transform_to_native_enums' => false,
+        'dart' => [
+            'use_nullable_types' => true,
+            'use_json_annotation' => false,
+        ],
+        'transformers' => [
+            'enums' => EnumTransformer::class,
+        ],
+    ];
+
+    $transformer = new DartTransformer($config);
+    $result = $transformer->generate([TestStatus::class]);
+
+    expect($result['path'])->toBe('tests/dart/generated.dart');
+    expect(file_exists('tests/dart/generated.dart'))->toBeTrue();
+
+    $content = file_get_contents('tests/dart/generated.dart');
+    expect($content)->toContain('class TestStatus');
+    expect($content)->toContain("static const String ACTIVE = 'active'");
 
     // cleanup
     unlink('tests/dart/generated.dart');

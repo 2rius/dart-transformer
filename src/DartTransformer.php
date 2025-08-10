@@ -20,7 +20,7 @@ class DartTransformer
 
     public function generate(?array $classes = null): array
     {
-        $classes = $classes ?? $this->discoverAllClasses();
+        $classes = $classes ?? $this->collectTransformableClasses();
 
         $definitions = [];
 
@@ -65,10 +65,10 @@ class DartTransformer
 
     protected function getAggregatedOutputPath(): string
     {
-        $basePath = $this->config['output']['path'] ?? 'resources/dart';
-        $file = $this->config['output']['file'] ?? 'generated.dart';
+        $outputFile = $this->config['output_file']
+            ?? ((function_exists('resource_path') ? resource_path('dart/generated.dart') : 'resources/dart/generated.dart'));
 
-        return rtrim($basePath, '/').'/'.$file;
+        return $outputFile;
     }
 
     protected function writeAggregatedFile(string $path, array $definitions): void
@@ -94,7 +94,7 @@ class DartTransformer
 
         if ($this->config['dart']['use_json_annotation'] ?? true) {
             $lines[] = "import 'package:json_annotation/json_annotation.dart';";
-            $file = $this->config['output']['file'] ?? 'generated.dart';
+            $file = basename($this->getAggregatedOutputPath());
             $g = preg_replace('/\.dart$/', '.g.dart', $file);
             $lines[] = "part '$g';";
             $lines[] = '';
@@ -105,36 +105,56 @@ class DartTransformer
 
     protected function getDiscoveryPaths(): array
     {
-        $paths = [];
+        $paths = $this->config['auto_discover_types'] ?? [];
 
-        if ($this->config['auto_discover']['data']['enabled'] ?? false) {
-            $paths = array_merge($paths, $this->config['auto_discover']['data']['paths'] ?? []);
-        }
-
-        if ($this->config['auto_discover']['enums']['enabled'] ?? false) {
-            $paths = array_merge($paths, $this->config['auto_discover']['enums']['paths'] ?? []);
-        }
-
-        return $paths;
+        return array_values(array_filter($paths));
     }
 
-    protected function discoverAllClasses(): array
+    protected function collectTransformableClasses(): array
     {
         $paths = $this->getDiscoveryPaths();
-        $classes = [];
-
+        $allFoundClasses = [];
         foreach ($paths as $path) {
-            $classes = array_merge($classes, $this->discoverClasses($path));
+            $allFoundClasses = array_merge($allFoundClasses, $this->discoverClasses($path));
         }
 
-        return array_values(array_unique($classes));
+        $allFoundClasses = array_values(array_unique($allFoundClasses));
+
+        $collectors = $this->config['collectors'] ?? [];
+        if (empty($collectors)) {
+            return $allFoundClasses; // fallback: everything discovered
+        }
+
+        $selected = [];
+        foreach ($collectors as $collectorClass) {
+            if (! class_exists($collectorClass)) {
+                continue;
+            }
+            $collector = new $collectorClass($this->config);
+            if (! method_exists($collector, 'shouldCollect')) {
+                continue;
+            }
+            foreach ($allFoundClasses as $fqcn) {
+                try {
+                    $reflection = new \ReflectionClass($fqcn);
+                } catch (\Throwable $e) {
+                    continue;
+                }
+                if ($collector->shouldCollect($reflection)) {
+                    $selected[] = $fqcn;
+                }
+            }
+        }
+
+        return array_values(array_unique($selected));
     }
 
     protected function discoverClasses(string $path): array
     {
         $classes = [];
 
-        $basePath = function_exists('base_path') ? base_path($path) : getcwd().DIRECTORY_SEPARATOR.$path;
+        $basePath = is_callable($path) ? (string) $path() : $path;
+        $basePath = function_exists('base_path') ? base_path($basePath) : $basePath;
         if (! is_dir($basePath)) {
             return [];
         }

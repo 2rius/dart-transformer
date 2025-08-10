@@ -19,6 +19,13 @@ abstract class BaseTransformer implements TransformerContract
 
     protected function phpTypeToDartType(string $phpType): string
     {
+        // Apply configured replacements first
+        foreach (($this->config['default_type_replacements'] ?? []) as $replaced => $dartType) {
+            if (strcasecmp(ltrim($replaced, '\\'), ltrim($phpType, '\\')) === 0) {
+                return $dartType;
+            }
+        }
+
         return match ($phpType) {
             'int' => 'int',
             'float', 'double' => 'double',

@@ -33,10 +33,7 @@ class IntegrationTestSimpleEnum
 
 it('can handle file output operations', function () {
     $config = [
-        'output' => [
-            'path' => 'tests/temp',
-            'extension' => '.dart',
-        ],
+        'output_file' => 'tests/temp/generated.dart',
         'dart' => [
             'use_nullable_types' => true,
             'use_json_annotation' => false,
@@ -96,10 +93,7 @@ it('can register custom transformers', function () {
 
 it('handles directory creation for nested paths', function () {
     $config = [
-        'output' => [
-            'path' => 'tests/nested/deep/path',
-            'extension' => '.dart',
-        ],
+        'output_file' => 'tests/nested/deep/path/generated.dart',
     ];
 
     $transformer = new DartTransformer($config);
@@ -118,18 +112,9 @@ it('handles directory creation for nested paths', function () {
 
 // Removed: per-class filename logic is not used in aggregated generation
 
-it('can handle discovery paths configuration', function () {
+it('can handle auto discover types configuration', function () {
     $config = [
-        'auto_discover' => [
-            'data' => [
-                'enabled' => true,
-                'paths' => ['app/Data', 'app/Models'],
-            ],
-            'enums' => [
-                'enabled' => false,
-                'paths' => ['app/Enums'],
-            ],
-        ],
+        'auto_discover_types' => ['app', 'app/Domain'],
     ];
 
     $transformer = new DartTransformer($config);
@@ -141,5 +126,5 @@ it('can handle discovery paths configuration', function () {
 
     $paths = $method->invoke($transformer);
 
-    expect($paths)->toBe(['app/Data', 'app/Models']);
+    expect($paths)->toBe(['app', 'app/Domain']);
 });
