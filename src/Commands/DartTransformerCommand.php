@@ -16,7 +16,35 @@ class DartTransformerCommand extends Command
 
     public function handle(): int
     {
-        $transformer = app(DartTransformer::class);
+        // Read CLI options
+        $pathOption = (string) ($this->option('path') ?? '');
+        $outputOption = (string) ($this->option('output') ?? '');
+        $formatOption = (bool) ($this->option('format'));
+
+        // Build config overrides only when options are provided
+        $overrides = [];
+        if ($pathOption !== '') {
+            $paths = array_values(array_filter(array_map('trim', preg_split('/[,;|]/', $pathOption))));
+            if (! empty($paths)) {
+                $overrides['auto_discover_types'] = $paths;
+            }
+        }
+        if ($outputOption !== '') {
+            $overrides['output_file'] = $outputOption;
+        }
+        if ($formatOption) {
+            $overrides['formatter'] = \M2rius\DartTransformer\Formatters\DartFormatter::class;
+        }
+
+        // Use container-resolved instance when no overrides (supports test mocking)
+        // Otherwise instantiate a local transformer with merged config
+        if (! empty($overrides)) {
+            $baseConfig = function_exists('config') ? (array) config('dart-transformer', []) : [];
+            $config = array_replace_recursive($baseConfig, $overrides);
+            $transformer = new DartTransformer($config);
+        } else {
+            $transformer = app(DartTransformer::class);
+        }
 
         $this->info('Generating Dart definitions...');
 
