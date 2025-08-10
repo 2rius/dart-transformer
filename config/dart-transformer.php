@@ -24,8 +24,10 @@ return [
      * Output settings
      */
     'output' => [
+        // Directory where the aggregated file will be written
         'path' => 'resources/dart',
-        'extension' => '.dart',
+        // Name of the aggregated file
+        'file' => 'generated.dart',
     ],
 
     /*
@@ -42,6 +44,7 @@ return [
     'dart' => [
         'use_nullable_types' => true,
         'use_json_annotation' => true,
-        'package_name' => null, // Auto-detect from pubspec.yaml if null
+        // You can set a header banner or leave null for default
+        'header' => null,
     ],
 ];

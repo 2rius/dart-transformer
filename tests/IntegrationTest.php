@@ -46,50 +46,30 @@ it('can handle file output operations', function () {
     $transformer = new DartTransformer($config);
 
     // Clean up any existing test file
-    $expectedPath = 'tests/temp/integration_test_user_data.dart';
-    if (file_exists($expectedPath)) {
-        unlink($expectedPath);
+    $generated = 'tests/temp/generated.dart';
+    if (file_exists($generated)) {
+        unlink($generated);
     }
 
-    $filePath = $transformer->transformToFile(IntegrationTestUserData::class);
+    $result = $transformer->generate([IntegrationTestUserData::class]);
 
-    expect($filePath)->toBe($expectedPath);
-    expect(file_exists($filePath))->toBeTrue();
+    expect($result['path'])->toBe($generated);
+    expect(file_exists($generated))->toBeTrue();
 
-    $content = file_get_contents($filePath);
+    $content = file_get_contents($generated);
     expect($content)->toContain('class IntegrationTestUserData');
     expect($content)->toContain('final int id');
     expect($content)->toContain('final String? email');
     expect($content)->toContain('final List<dynamic> tags');
 
     // Clean up
-    unlink($filePath);
+    unlink($generated);
     if (is_dir('tests/temp')) {
         rmdir('tests/temp');
     }
 });
 
-it('can transform with custom output path', function () {
-    $transformer = new DartTransformer;
-
-    $customPath = 'tests/custom/my_user_data.dart';
-
-    // Clean up any existing test file
-    if (file_exists($customPath)) {
-        unlink($customPath);
-    }
-
-    $filePath = $transformer->transformToFile(IntegrationTestUserData::class, $customPath);
-
-    expect($filePath)->toBe($customPath);
-    expect(file_exists($filePath))->toBeTrue();
-
-    // Clean up
-    unlink($filePath);
-    if (is_dir('tests/custom')) {
-        rmdir('tests/custom');
-    }
-});
+// Removed per-class transformToFile API in favor of aggregated generation
 
 it('throws exception for unsupported class', function () {
     $transformer = new DartTransformer;
@@ -124,31 +104,19 @@ it('handles directory creation for nested paths', function () {
 
     $transformer = new DartTransformer($config);
 
-    $filePath = $transformer->transformToFile(IntegrationTestUserData::class);
+    $result = $transformer->generate([IntegrationTestUserData::class]);
 
-    expect(file_exists($filePath))->toBeTrue();
-    expect(dirname($filePath))->toBe('tests/nested/deep/path');
+    expect(file_exists($result['path']))->toBeTrue();
+    expect(dirname($result['path']))->toBe('tests/nested/deep/path');
 
     // Clean up
-    unlink($filePath);
+    unlink($result['path']);
     rmdir('tests/nested/deep/path');
     rmdir('tests/nested/deep');
     rmdir('tests/nested');
 });
 
-it('converts class names to snake_case correctly', function () {
-    $transformer = new DartTransformer;
-
-    // Access protected method via reflection
-    $reflection = new ReflectionClass($transformer);
-    $method = $reflection->getMethod('classNameToFileName');
-    $method->setAccessible(true);
-
-    expect($method->invoke($transformer, 'UserProfileData'))->toBe('user_profile_data');
-    expect($method->invoke($transformer, 'APIResponse'))->toBe('a_p_i_response');
-    expect($method->invoke($transformer, 'XMLHttpRequest'))->toBe('x_m_l_http_request');
-    expect($method->invoke($transformer, 'SimpleClass'))->toBe('simple_class');
-});
+// Removed: per-class filename logic is not used in aggregated generation
 
 it('can handle discovery paths configuration', function () {
     $config = [

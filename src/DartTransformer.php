@@ -18,6 +18,26 @@ class DartTransformer
         $this->registerDefaultTransformers();
     }
 
+    public function generate(?array $classes = null): array
+    {
+        $classes = $classes ?? $this->discoverAllClasses();
+
+        $definitions = [];
+
+        foreach ($classes as $className) {
+            try {
+                $definitions[] = $this->transform($className);
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        $outputPath = $this->getAggregatedOutputPath();
+        $this->writeAggregatedFile($outputPath, $definitions);
+
+        return ['path' => $outputPath, 'count' => count($definitions)];
+    }
+
     public function transform(string $className): string
     {
         $reflection = new ReflectionClass($className);
@@ -29,46 +49,6 @@ class DartTransformer
         }
 
         throw new \InvalidArgumentException("No transformer found for class: {$className}");
-    }
-
-    public function transformToFile(string $className, ?string $outputPath = null): string
-    {
-        $dartCode = $this->transform($className);
-
-        if (! $outputPath) {
-            $outputPath = $this->getDefaultOutputPath($className);
-        }
-
-        $directory = dirname($outputPath);
-        if (! is_dir($directory)) {
-            mkdir($directory, 0755, true);
-        }
-
-        file_put_contents($outputPath, $dartCode);
-
-        return $outputPath;
-    }
-
-    public function discoverAndTransform(?array $paths = null): array
-    {
-        $paths = $paths ?? $this->getDiscoveryPaths();
-        $transformedFiles = [];
-
-        foreach ($paths as $path) {
-            $classes = $this->discoverClasses($path);
-
-            foreach ($classes as $className) {
-                try {
-                    $outputPath = $this->transformToFile($className);
-                    $transformedFiles[] = $outputPath;
-                } catch (\Exception $e) {
-                    // Log error or handle silently
-                    continue;
-                }
-            }
-        }
-
-        return $transformedFiles;
     }
 
     protected function registerDefaultTransformers(): void
@@ -83,23 +63,44 @@ class DartTransformer
         }
     }
 
-    protected function getDefaultOutputPath(string $className): string
+    protected function getAggregatedOutputPath(): string
     {
         $basePath = $this->config['output']['path'] ?? 'resources/dart';
-        $extension = $this->config['output']['extension'] ?? '.dart';
+        $file = $this->config['output']['file'] ?? 'generated.dart';
 
-        $fileName = $this->classNameToFileName($className);
-
-        return $basePath.'/'.$fileName.$extension;
+        return rtrim($basePath, '/').'/'.$file;
     }
 
-    protected function classNameToFileName(string $className): string
+    protected function writeAggregatedFile(string $path, array $definitions): void
     {
-        $parts = explode('\\', $className);
-        $className = end($parts);
+        $directory = dirname($path);
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
 
-        // Convert PascalCase to snake_case
-        return strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $className));
+        $header = $this->buildFileHeader();
+        $content = $header.implode("\n\n", $definitions)."\n";
+
+        file_put_contents($path, $content);
+    }
+
+    protected function buildFileHeader(): string
+    {
+        $lines = [
+            '// GENERATED CODE - DO NOT MODIFY BY HAND',
+            '// ignore_for_file: type=lint',
+            '',
+        ];
+
+        if ($this->config['dart']['use_json_annotation'] ?? true) {
+            $lines[] = "import 'package:json_annotation/json_annotation.dart';";
+            $file = $this->config['output']['file'] ?? 'generated.dart';
+            $g = preg_replace('/\.dart$/', '.g.dart', $file);
+            $lines[] = "part '$g';";
+            $lines[] = '';
+        }
+
+        return implode("\n", $lines);
     }
 
     protected function getDiscoveryPaths(): array
@@ -117,11 +118,68 @@ class DartTransformer
         return $paths;
     }
 
+    protected function discoverAllClasses(): array
+    {
+        $paths = $this->getDiscoveryPaths();
+        $classes = [];
+
+        foreach ($paths as $path) {
+            $classes = array_merge($classes, $this->discoverClasses($path));
+        }
+
+        return array_values(array_unique($classes));
+    }
+
     protected function discoverClasses(string $path): array
     {
-        // This is a simplified implementation
-        // In a real implementation, you'd use reflection or file scanning
-        // to discover classes in the given path
-        return [];
+        $classes = [];
+
+        $basePath = function_exists('base_path') ? base_path($path) : getcwd().DIRECTORY_SEPARATOR.$path;
+        if (! is_dir($basePath)) {
+            return [];
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($basePath, \FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->getExtension() !== 'php') {
+                continue;
+            }
+
+            $contents = @file_get_contents($file->getPathname());
+            if ($contents === false) {
+                continue;
+            }
+
+            if (! preg_match('/^\s*namespace\s+([^;]+);/m', $contents, $nsMatch)) {
+                continue;
+            }
+
+            if (preg_match('/^\s*(?:final\s+)?class\s+(\w+)/m', $contents, $classMatch)) {
+                $classes[] = trim($nsMatch[1]).'\\\\'.trim($classMatch[1]);
+
+                continue;
+            }
+
+            if (preg_match('/^\s*enum\s+(\w+)/m', $contents, $enumMatch)) {
+                $classes[] = trim($nsMatch[1]).'\\\\'.trim($enumMatch[1]);
+
+                continue;
+            }
+        }
+
+        $valid = [];
+        foreach ($classes as $fqcn) {
+            try {
+                new ReflectionClass($fqcn);
+                $valid[] = $fqcn;
+            } catch (\Throwable $e) {
+                // skip non-loadable classes
+            }
+        }
+
+        return $valid;
     }
 }

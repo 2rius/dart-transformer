@@ -37,9 +37,7 @@ This is the contents of the published config file:
 
 ```php
 return [
-    /*
-     * Automatically discover and transform classes that match these patterns
-     */
+    // Automatically discover and transform classes
     'auto_discover' => [
         'data' => [
             'enabled' => true,
@@ -55,52 +53,38 @@ return [
         ],
     ],
 
-    /*
-     * Output settings
-     */
+    // Aggregated output
     'output' => [
         'path' => 'resources/dart',
-        'extension' => '.dart',
+        'file' => 'generated.dart',
     ],
 
-    /*
-     * Transformation options
-     */
+    // Transformers
     'transformers' => [
         'data_classes' => \M2rius\DartTransformer\Transformers\DataClassTransformer::class,
         'enums' => \M2rius\DartTransformer\Transformers\EnumTransformer::class,
     ],
 
-    /*
-     * Dart specific options
-     */
+    // Dart specific options
     'dart' => [
         'use_nullable_types' => true,
         'use_json_annotation' => true,
-        'package_name' => null, // Auto-detect from pubspec.yaml if null
+        'header' => null,
     ],
 ];
 ```
 
 ## Usage
 
-### Transform a specific class
+### Generate aggregated Dart definitions
+
+Run the command to generate a single aggregated file with all transformable classes and enums:
 
 ```bash
-php artisan dart:transform App\\Data\\UserData
+php artisan dart:transform
 ```
 
-### Auto-discover and transform all applicable classes
-
-```bash
-php artisan dart:transform --discover
-```
-
-### Specify custom output directory
-
-```bash
-php artisan dart:transform App\\Data\\UserData --output=lib/models
-```
+By default this writes to `resources/dart/generated.dart`.
 
 ### Example Transformations
 
@@ -187,21 +171,14 @@ enum Status {
 
 ### Programmatic Usage
 
-You can also use the transformer programmatically:
-
 ```php
 use M2rius\DartTransformer\DartTransformer;
 
 $transformer = app(DartTransformer::class);
 
-// Transform a class and get the Dart code
-$dartCode = $transformer->transform(App\Data\UserData::class);
-
-// Transform and save to file
-$filePath = $transformer->transformToFile(App\Data\UserData::class);
-
-// Auto-discover and transform multiple classes
-$transformedFiles = $transformer->discoverAndTransform();
+// Generate aggregated file; optionally pass an explicit list of classes
+$result = $transformer->generate();
+// ['path' => 'resources/dart/generated.dart', 'count' => 42]
 ```
 
 ## Configuration

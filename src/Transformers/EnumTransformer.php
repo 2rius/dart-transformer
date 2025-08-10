@@ -35,11 +35,7 @@ class EnumTransformer extends BaseTransformer
 
         $dartCode = [];
 
-        // Add JSON annotation if enabled
-        if ($this->config['dart']['use_json_annotation'] ?? true) {
-            $dartCode[] = "import 'package:json_annotation/json_annotation.dart';";
-            $dartCode[] = '';
-        }
+        // Aggregated file will contain imports
 
         $dartCode[] = "enum {$className} {";
 
@@ -70,11 +66,7 @@ class EnumTransformer extends BaseTransformer
 
         $dartCode = [];
 
-        // Add JSON annotation if enabled
-        if ($this->config['dart']['use_json_annotation'] ?? true) {
-            $dartCode[] = "import 'package:json_annotation/json_annotation.dart';";
-            $dartCode[] = '';
-        }
+        // Aggregated file will contain imports
 
         $dartCode[] = "enum {$className} {";
 
