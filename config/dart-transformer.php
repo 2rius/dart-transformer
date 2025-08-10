@@ -48,9 +48,9 @@ return [
 
     /*
      * The generated Dart file can be formatted. Provide a formatter class name
-     * if desired; no formatter is used by default.
+     * if desired; Dart formatter is used by default.
      */
-    'formatter' => null,
+    'formatter' => \M2rius\DartTransformer\Formatters\DartFormatter::class,
 
     /*
      * Enums can be generated as native Dart enums or as a class with string constants.

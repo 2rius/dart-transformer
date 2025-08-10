@@ -66,7 +66,7 @@ class DartTransformer
     protected function getAggregatedOutputPath(): string
     {
         $outputFile = $this->config['output_file']
-            ?? ((function_exists('resource_path') ? resource_path('dart/generated.dart') : 'resources/dart/generated.dart'));
+            ?? (function_exists('resource_path') ? resource_path('dart/generated.dart') : 'resources/dart/generated.dart');
 
         return $outputFile;
     }
@@ -79,18 +79,26 @@ class DartTransformer
         }
 
         $header = $this->buildFileHeader();
-        $content = $header.implode("\n\n", $definitions)."\n";
+        $content = $header . implode("\n\n", $definitions) . "\n";
 
         file_put_contents($path, $content);
+
+        $this->applyFormatter($path);
     }
 
     protected function buildFileHeader(): string
     {
-        $lines = [
-            '// GENERATED CODE - DO NOT MODIFY BY HAND',
-            '// ignore_for_file: type=lint',
-            '',
-        ];
+        $lines = [];
+
+        $customHeader = $this->config['dart']['header'] ?? null;
+        if (is_string($customHeader) && trim($customHeader) !== '') {
+            $lines[] = rtrim($customHeader);
+            $lines[] = '';
+        }
+
+        $lines[] = '// GENERATED CODE - DO NOT MODIFY BY HAND';
+        $lines[] = '// ignore_for_file: type=lint';
+        $lines[] = '';
 
         if ($this->config['dart']['use_json_annotation'] ?? true) {
             $lines[] = "import 'package:json_annotation/json_annotation.dart';";
@@ -101,6 +109,27 @@ class DartTransformer
         }
 
         return implode("\n", $lines);
+    }
+
+    protected function applyFormatter(string $filePath): void
+    {
+        $formatterClass = $this->config['formatter'] ?? null;
+        if (! is_string($formatterClass) || $formatterClass === '') {
+            return;
+        }
+
+        if (! class_exists($formatterClass)) {
+            return;
+        }
+
+        try {
+            $formatter = new $formatterClass();
+            if (method_exists($formatter, 'format')) {
+                $formatter->format($filePath);
+            }
+        } catch (\Throwable $e) {
+            // Silently ignore formatting errors
+        }
     }
 
     protected function getDiscoveryPaths(): array
@@ -136,7 +165,7 @@ class DartTransformer
             }
             foreach ($allFoundClasses as $fqcn) {
                 try {
-                    $reflection = new \ReflectionClass($fqcn);
+                    $reflection = new ReflectionClass($fqcn);
                 } catch (\Throwable $e) {
                     continue;
                 }
@@ -178,13 +207,13 @@ class DartTransformer
             }
 
             if (preg_match('/^\s*(?:final\s+)?class\s+(\w+)/m', $contents, $classMatch)) {
-                $classes[] = trim($nsMatch[1]).'\\\\'.trim($classMatch[1]);
+                $classes[] = trim($nsMatch[1]) . '\\\\' . trim($classMatch[1]);
 
                 continue;
             }
 
             if (preg_match('/^\s*enum\s+(\w+)/m', $contents, $enumMatch)) {
-                $classes[] = trim($nsMatch[1]).'\\\\'.trim($enumMatch[1]);
+                $classes[] = trim($nsMatch[1]) . '\\\\' . trim($enumMatch[1]);
 
                 continue;
             }
