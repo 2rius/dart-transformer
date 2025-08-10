@@ -21,11 +21,30 @@ This package is heavily inspired by [Spatie's TypeScript Transformer](https://sp
 
 ## Installation
 
-You can install the package via composer:
+You can install the package by adding the repository to your composer.json:
+
+```json
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/2rius/dart-transformer"
+        }
+    ],
+}
+```
+
+And then afterwards install the package via composer:
+
+```bash
+composer require 2rius/dart-transformer:dev-main
+```
+
+<!-- You can install the package via composer:
 
 ```bash
 composer require 2rius/dart-transformer
-```
+``` -->
 
 You can publish the config file with:
 
@@ -128,25 +147,16 @@ enum Status {
 }
 ```
 
-### Programmatic Usage
-
-```php
-use M2rius\DartTransformer\DartTransformer;
-
-$transformer = app(DartTransformer::class);
-
-// Generate aggregated file; optionally pass an explicit list of classes
-$result = $transformer->generate();
-// ['path' => 'resources/dart/generated.dart', 'count' => 42]
-```
-
 ## Configuration
 
 The package provides several configuration options:
 
-- **auto_discover**: Configure which directories to scan for classes
-- **output**: Set the output directory and file extension
+- **auto_discover_types**: Configure which directories to scan for classes
+- **collectors**: Customize which collectors to use
 - **transformers**: Customize which transformers to use
+- **default_type_replacements**: Configure default type replacements when mapping from PHP to Dart types.
+- **output_file**: Set the output file
+- **formatter**: Format the generated Dart file.
 - **dart**: Dart-specific options like nullable types and JSON annotations
 
 ### Class naming and collisions
