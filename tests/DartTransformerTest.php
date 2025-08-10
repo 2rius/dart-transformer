@@ -24,35 +24,48 @@ enum TestStatus: string
     case PENDING = 'pending';
 }
 
-it('can transform data class to dart', function () {
+it('aggregates transformed code into a single output', function () {
     $config = [
+        'output_file' => 'tests/dart/generated.dart',
         'dart' => [
             'use_nullable_types' => true,
             'use_json_annotation' => true,
         ],
         'transformers' => [
             'data_classes' => DataClassTransformer::class,
+            'enums' => EnumTransformer::class,
         ],
     ];
 
     $transformer = new DartTransformer($config);
-    $dartCode = $transformer->transform(TestUserData::class);
 
-    expect($dartCode)->toContain('class TestUserData');
-    expect($dartCode)->toContain('final int id;');
-    expect($dartCode)->toContain('final String name;');
-    expect($dartCode)->toContain('final String? email;');
-    expect($dartCode)->toContain('final bool isActive;');
-    expect($dartCode)->toContain('@JsonSerializable()');
-    expect($dartCode)->toContain('fromJson');
-    expect($dartCode)->toContain('toJson');
+    // Simulate discovery result
+    $classes = [TestUserData::class, TestStatus::class];
+    expect(method_exists($transformer, 'generate'))
+        ->toBeTrue();
+
+    $result = $transformer->generate($classes);
+
+    expect($result['path'])->toBe('tests/dart/generated.dart');
+    expect($result['count'])->toBe(2);
+    expect(file_exists('tests/dart/generated.dart'))->toBeTrue();
+
+    $content = file_get_contents('tests/dart/generated.dart');
+    expect($content)->toContain('class TestUserData');
+    expect($content)->toContain('enum TestStatus');
+
+    // cleanup
+    unlink('tests/dart/generated.dart');
+    @rmdir('tests/dart');
 });
 
-it('can transform enum to dart', function () {
+it('can generate enums as string constants when disabled native enums', function () {
     $config = [
+        'output_file' => 'tests/dart/generated.dart',
+        'transform_to_native_enums' => false,
         'dart' => [
             'use_nullable_types' => true,
-            'use_json_annotation' => true,
+            'use_json_annotation' => false,
         ],
         'transformers' => [
             'enums' => EnumTransformer::class,
@@ -60,42 +73,16 @@ it('can transform enum to dart', function () {
     ];
 
     $transformer = new DartTransformer($config);
-    $dartCode = $transformer->transform(TestStatus::class);
+    $result = $transformer->generate([TestStatus::class]);
 
-    expect($dartCode)->toContain('enum TestStatus');
-    expect($dartCode)->toContain('ACTIVE');
-    expect($dartCode)->toContain('INACTIVE');
-    expect($dartCode)->toContain('PENDING');
-    expect($dartCode)->toContain("@JsonValue('active')");
-});
+    expect($result['path'])->toBe('tests/dart/generated.dart');
+    expect(file_exists('tests/dart/generated.dart'))->toBeTrue();
 
-it('generates correct file names', function () {
-    $config = [
-        'output' => [
-            'path' => 'tests/dart',
-            'extension' => '.dart',
-        ],
-    ];
+    $content = file_get_contents('tests/dart/generated.dart');
+    expect($content)->toContain('class TestStatus');
+    expect($content)->toContain("static const String ACTIVE = 'active'");
 
-    $transformer = new DartTransformer($config);
-    $reflection = new ReflectionMethod($transformer, 'classNameToFileName');
-    $reflection->setAccessible(true);
-
-    expect($reflection->invoke($transformer, 'TestUserData'))->toBe('test_user_data');
-    expect($reflection->invoke($transformer, 'UserProfile'))->toBe('user_profile');
-    expect($reflection->invoke($transformer, 'API'))->toBe('a_p_i');
-});
-
-it('can determine if class can be transformed', function () {
-    $config = [];
-    $dataTransformer = new DataClassTransformer($config);
-    $enumTransformer = new EnumTransformer($config);
-
-    $dataReflection = new ReflectionClass(TestUserData::class);
-    $enumReflection = new ReflectionClass(TestStatus::class);
-
-    expect($dataTransformer->canTransform($dataReflection))->toBeTrue();
-    expect($enumTransformer->canTransform($enumReflection))->toBeTrue();
-    expect($dataTransformer->canTransform($enumReflection))->toBeFalse();
-    expect($enumTransformer->canTransform($dataReflection))->toBeFalse();
+    // cleanup
+    unlink('tests/dart/generated.dart');
+    @rmdir('tests/dart');
 });

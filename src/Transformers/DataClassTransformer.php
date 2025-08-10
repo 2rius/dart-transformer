@@ -22,13 +22,7 @@ class DataClassTransformer extends BaseTransformer
 
         $dartCode = [];
 
-        // Add imports if using JSON annotation
-        if ($this->config['dart']['use_json_annotation'] ?? true) {
-            $dartCode[] = "import 'package:json_annotation/json_annotation.dart';";
-            $dartCode[] = '';
-            $dartCode[] = "part '{$this->classNameToFileName($className)}.g.dart';";
-            $dartCode[] = '';
-        }
+        // Aggregated file will contain imports; avoid per-class imports/parts
 
         // Add JSON annotation if enabled
         if ($this->config['dart']['use_json_annotation'] ?? true) {
@@ -126,8 +120,5 @@ class DataClassTransformer extends BaseTransformer
         return "  const {$className}({\n    ".implode(",\n    ", $propertyNames).",\n  });";
     }
 
-    protected function classNameToFileName(string $className): string
-    {
-        return strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $className));
-    }
+    // No longer needed for aggregated output
 }
