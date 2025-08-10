@@ -52,11 +52,6 @@ return [
     'formatter' => null,
 
     /*
-     * Enums can be generated as native Dart enums or as a class with string constants.
-     */
-    'transform_to_native_enums' => false,
-
-    /*
      * Dart-specific options.
      */
     'dart' => [

@@ -19,11 +19,7 @@ class EnumTransformer extends BaseTransformer
         $className = $this->getClassName($reflection);
 
         if ($reflection->isEnum()) {
-            $useNative = $this->config['transform_to_native_enums'] ?? true;
-
-            return $useNative
-                ? $this->transformNativeEnum($reflection)
-                : $this->transformEnumAsStringConstants($reflection);
+            return $this->transformNativeEnum($reflection);
         }
 
         if ($this->isLaravelEnum($reflection)) {
@@ -61,26 +57,6 @@ class EnumTransformer extends BaseTransformer
         $dartCode[] = '}';
 
         return implode("\n", $dartCode);
-    }
-
-    protected function transformEnumAsStringConstants(ReflectionClass $reflection): string
-    {
-        $className = $this->getClassName($reflection);
-        $lines = [];
-        if ($this->config['dart']['use_json_annotation'] ?? true) {
-            // imports are in aggregated header
-        }
-        $lines[] = 'class '.$className.' {';
-
-        $enumReflection = new ReflectionEnum($reflection->getName());
-        foreach ($enumReflection->getCases() as $case) {
-            $value = $case instanceof ReflectionEnumBackedCase ? $case->getBackingValue() : $case->getName();
-            $lines[] = "static const String {$case->getName()} = '$value';";
-        }
-
-        $lines[] = '}';
-
-        return implode("\n", $lines);
     }
 
     protected function transformLaravelEnum(ReflectionClass $reflection): string
