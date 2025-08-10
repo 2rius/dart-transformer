@@ -62,6 +62,10 @@ return [
     'dart' => [
         'use_nullable_types' => true,
         'use_json_annotation' => true,
+        // Naming strategy controls how PHP class names become Dart class names.
+        // Default uses the short class name. If you encounter collisions, consider
+        // using FqcnUnderscoredNamingStrategy or implement your own strategy.
+        'naming_strategy' => \M2rius\DartTransformer\Naming\ShortClassNamingStrategy::class,
         'header' => null,
     ],
 ];

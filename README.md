@@ -33,76 +33,6 @@ You can publish the config file with:
 php artisan vendor:publish --tag="dart-transformer-config"
 ```
 
-This is the contents of the published config file:
-
-```php
-return [
-    /*
-     * The paths where dart-transformer will look for PHP classes to transform.
-     * Defaults to the Laravel app path.
-     */
-    'auto_discover_types' => [
-        function_exists('app_path') ? app_path() : 'app',
-    ],
-
-    /*
-     * Collectors will search for classes in the `auto_discover_types` paths and
-     * decide which classes should be transformed.
-     */
-    'collectors' => [
-        \M2rius\DartTransformer\Collectors\DefaultCollector::class,
-        \M2rius\DartTransformer\Collectors\EnumCollector::class,
-    ],
-
-    /*
-     * Transformers take PHP classes as input and will output a Dart representation.
-     */
-    'transformers' => [
-        \M2rius\DartTransformer\Transformers\DataClassTransformer::class,
-        \M2rius\DartTransformer\Transformers\EnumTransformer::class,
-    ],
-
-    /*
-     * Default type replacements map PHP types to Dart types.
-     */
-    'default_type_replacements' => [
-        \DateTimeInterface::class => 'String',
-        \DateTimeImmutable::class => 'String',
-        \DateTime::class => 'String',
-        \Carbon\CarbonInterface::class => 'String',
-        \Carbon\CarbonImmutable::class => 'String',
-        \Carbon\Carbon::class => 'String',
-    ],
-
-    /*
-     * The package will write the generated Dart to this file.
-     */
-    'output_file' => function_exists('resource_path')
-        ? resource_path('dart/generated.dart')
-        : 'resources/dart/generated.dart',
-
-    /*
-     * The generated Dart file can be formatted. Provide a formatter class name
-     * if desired; Dart formatter is used by default.
-     */
-    'formatter' => \M2rius\DartTransformer\Formatters\DartFormatter::class,
-
-    /*
-     * Enums can be generated as native Dart enums or as a class with string constants.
-     */
-    'transform_to_native_enums' => false,
-
-    /*
-     * Dart-specific options.
-     */
-    'dart' => [
-        'use_nullable_types' => true,
-        'use_json_annotation' => true,
-        'header' => null,
-    ],
-];
-```
-
 ## Usage
 
 ### Generate aggregated Dart definitions
@@ -218,6 +148,23 @@ The package provides several configuration options:
 - **output**: Set the output directory and file extension
 - **transformers**: Customize which transformers to use
 - **dart**: Dart-specific options like nullable types and JSON annotations
+
+### Class naming and collisions
+
+Dart does not have PHP-style namespaces inside a single file. When generating a single aggregated Dart file, two PHP classes that share the same short class name (e.g. `App\Data\UserData` and `App\Admin\UserData`) will collide.
+
+- By default we use the short class name via `ShortClassNamingStrategy`.
+- If you run into collisions, either:
+  - switch to `FqcnUnderscoredNamingStrategy` in your config to produce names like `App_Admin_UserData`, or
+  - implement your own strategy by implementing `M2rius\\DartTransformer\\Naming\\NamingStrategy` and set it in `dart.naming_strategy`.
+
+Example config:
+
+```php
+'dart' => [
+    'naming_strategy' => \M2rius\DartTransformer\Naming\FqcnUnderscoredNamingStrategy::class,
+],
+```
 
 ## Type Mapping
 
