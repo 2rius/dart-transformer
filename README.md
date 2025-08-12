@@ -1,10 +1,10 @@
 # Dart Transformer
 
-<!-- [![Latest Version on Packagist](https://img.shields.io/packagist/v/2rius/dart-transformer.svg?style=flat-square)](https://packagist.org/packages/2rius/dart-transformer) -->
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/2rius/dart-transformer/run-tests.yml?branch=main&label=Tests&style=flat-square)](https://github.com/2rius/dart-transformer/actions/workflows/run-tests.yml)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/2rius/dart-transformer/fix-php-code-style-issues.yml?branch=main&label=Code%20style&style=flat-square)](https://github.com/2rius/dart-transformer/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Github PHPStan Action Status](https://img.shields.io/github/actions/workflow/status/2rius/dart-transformer/phpstan.yml?branch=main&label=PHPStan&style=flat-square)](https://github.com/2rius/dart-transformer/actions/workflows/phpstan.yml)
-<!-- [![Total Downloads](https://img.shields.io/packagist/dt/2rius/dart-transformer.svg?style=flat-square)](https://packagist.org/packages/2rius/dart-transformer) -->
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/2rius/dart-transformer.svg?style=flat-square)](https://packagist.org/packages/2rius/dart-transformer)
+[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/2rius/dart-transformer/run-tests.yml?branch=main&label=run-tests&style=flat-square)](https://github.com/2rius/dart-transformer/actions/workflows/run-tests.yml)
+[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/2rius/dart-transformer/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/2rius/dart-transformer/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
+[![Github PHPStan Action Status](https://img.shields.io/github/actions/workflow/status/2rius/dart-transformer/phpstan.yml?branch=main&label=phpstan&style=flat-square)](https://github.com/2rius/dart-transformer/actions/workflows/phpstan.yml)
+[![Total Downloads](https://img.shields.io/packagist/dt/2rius/dart-transformer.svg?style=flat-square)](https://packagist.org/packages/2rius/dart-transformer)
 
 Laravel package for converting PHP classes and types to Dart equivalents, with special support for [Spatie Laravel Data](https://spatie.be/docs/laravel-data/v4/introduction) classes and PHP enums.
 
@@ -21,30 +21,11 @@ This package is heavily inspired by [Spatie's TypeScript Transformer](https://sp
 
 ## Installation
 
-You can install the package by adding the repository to your composer.json:
-
-```json
-{
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/2rius/dart-transformer"
-        }
-    ],
-}
-```
-
-And then afterwards install the package via composer:
-
-```bash
-composer require 2rius/dart-transformer:dev-main
-```
-
-<!-- You can install the package via composer:
+You can install the package via composer:
 
 ```bash
 composer require 2rius/dart-transformer
-``` -->
+```
 
 You can publish the config file with:
 
