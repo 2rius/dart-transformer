@@ -7,6 +7,7 @@ use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionUnionType;
 use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Optional;
 
 class DataClassTransformer extends BaseTransformer
 {
@@ -77,26 +78,72 @@ class DataClassTransformer extends BaseTransformer
         }
 
         if ($type instanceof ReflectionNamedType) {
-            $dartType = $this->phpTypeToDartType($type->getName());
+            $dartType = $this->resolvePropertyDartType($type->getName(), $property);
 
             return $type->allowsNull() ? $this->makeNullable($dartType) : $dartType;
         }
 
         if ($type instanceof ReflectionUnionType) {
-            $types = array_map(fn ($t) => $this->phpTypeToDartType($t->getName()), $type->getTypes());
+            $hasNull = false;
+            $hasOptional = false;
+            $dartTypes = [];
 
-            // Handle nullable union types
-            if (in_array('null', $types)) {
-                $types = array_filter($types, fn ($t) => $t !== 'null');
-                if (count($types) === 1) {
-                    return $this->makeNullable($types[0]);
+            foreach ($type->getTypes() as $t) {
+                $name = $t->getName();
+
+                if ($name === 'null') {
+                    $hasNull = true;
+                } elseif ($name === Optional::class) {
+                    $hasOptional = true;
+                } else {
+                    $dartTypes[] = $this->resolvePropertyDartType($name, $property);
                 }
             }
 
-            return 'dynamic'; // Fallback for complex union types
+            if (count($dartTypes) === 1) {
+                $dartType = $dartTypes[0];
+
+                return ($hasNull || $hasOptional) ? $this->makeNullable($dartType) : $dartType;
+            }
+
+            return 'dynamic';
         }
 
         return 'dynamic';
+    }
+
+    protected function resolvePropertyDartType(string $phpType, ReflectionProperty $property): string
+    {
+        if ($phpType === 'array') {
+            $elementType = $this->parseVarDocElementType($property);
+
+            if ($elementType !== null) {
+                $dartElementType = $this->phpTypeToDartType($elementType);
+
+                return "List<{$dartElementType}>";
+            }
+        }
+
+        return $this->phpTypeToDartType($phpType);
+    }
+
+    protected function parseVarDocElementType(ReflectionProperty $property): ?string
+    {
+        $doc = $property->getDocComment();
+
+        if (! $doc) {
+            return null;
+        }
+
+        if (preg_match('/@var\s+([\w\\\\]+)\[\]/', $doc, $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match('/@var\s+array<([\w\\\\]+)>/', $doc, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
     }
 
     protected function generateConstructor(string $className, array $properties): string
